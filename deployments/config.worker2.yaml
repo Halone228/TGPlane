@@ -3,8 +3,8 @@ app:
   name: tgplane-worker-2
 
 tdlib:
-  api_id: 7816785
-  api_hash: "a31486c26edf6c02ed37333696a2a49e"
+  api_id: 0             # from https://my.telegram.org
+  api_hash: ""
   data_dir: "/data/sessions"
   log_level: 1
   use_test_dc: false

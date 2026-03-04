@@ -224,3 +224,7 @@ config.worker.local.yaml
 
 # Claude Code memory
 memory/
+
+# Local configs (use *.example as template)
+config.yaml
+config.worker.yaml
