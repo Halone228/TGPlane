@@ -37,10 +37,19 @@ prod-logs:
 	docker compose -f deployments/docker-compose.prod.yml logs -f
 
 migrate-up:
-	migrate -path migrations -database "$$DATABASE_URL" up
+	bash scripts/migrate.sh up
 
 migrate-down:
-	migrate -path migrations -database "$$DATABASE_URL" down 1
+	bash scripts/migrate.sh down 1
+
+migrate-version:
+	bash scripts/migrate.sh version
+
+setup:
+	bash scripts/setup.sh
+
+build-tdlib:
+	bash scripts/build-tdlib.sh
 
 web-dev:
 	cd web && npm run dev
