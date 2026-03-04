@@ -1,0 +1,34 @@
+# Main node production config.
+# Sensitive values are injected via environment variables (see docker-compose.prod.yml).
+app:
+  mode: main
+  name: tgplane
+
+database:
+  # Override with DATABASE_DSN env var in docker-compose.
+  dsn: "postgres://tgplane:tgplane@postgres:5432/tgplane?sslmode=disable"
+  max_open_conns: 50
+  max_idle_conns: 10
+  conn_max_lifetime_seconds: 300
+
+redis:
+  addr: "redis:6379"
+  password: ""
+  db: 0
+
+auth:
+  master_key: ""   # set TGPLANE_MASTER_KEY env var
+
+rate_limit:
+  rps: 100
+  burst: 200
+
+grpc:
+  listen_addr: ":50051"
+
+http:
+  addr: ":8080"
+
+log:
+  level: info
+  json: true

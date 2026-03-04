@@ -1,0 +1,42 @@
+# ---- Build stage (with TDLib) ----
+FROM golang:1.25-bookworm AS builder
+
+WORKDIR /src
+
+# System deps for TDLib build
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cmake make g++ zlib1g-dev libssl-dev gperf \
+    && rm -rf /var/lib/apt/lists/*
+
+# Dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# TDLib submodule
+COPY telegram-database/ telegram-database/
+COPY scripts/build-tdlib.sh scripts/
+RUN bash scripts/build-tdlib.sh
+
+# Source
+COPY . .
+
+RUN CGO_ENABLED=1 GOOS=linux \
+    CGO_CFLAGS="-I/src/telegram-database/build/include" \
+    CGO_LDFLAGS="-L/src/telegram-database/build/lib -ltdjson_static -lc++ -lz -lssl -lcrypto" \
+    go build -ldflags="-s -w" -o /bin/tgplane-worker ./cmd/worker
+
+# ---- Runtime stage ----
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libssl3 zlib1g ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /bin/tgplane-worker /tgplane-worker
+COPY --from=builder /src/telegram-database/build/lib/libtdjson.so* /usr/local/lib/
+RUN ldconfig
+
+EXPOSE 8081 50052
+
+ENTRYPOINT ["/tgplane-worker"]
+CMD ["--config", "/etc/tgplane/config.worker.yaml"]

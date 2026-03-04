@@ -1,0 +1,20 @@
+app:
+  mode: worker
+  name: tgplane-worker-1
+
+tdlib:
+  api_id: 7816785
+  api_hash: "a31486c26edf6c02ed37333696a2a49e"
+  data_dir: "./data/sessions"
+  log_level: 1
+  use_test_dc: false
+
+grpc:
+  main_addr: "localhost:50051"
+
+http:
+  addr: ":8081"
+
+log:
+  level: info
+  json: false

@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package tgplane.v1;
+
+option go_package = "github.com/tgplane/tgplane/api/proto/gen/tgplane/v1;tgplanev1";
+
+// WorkerService is exposed by each worker node.
+// The main node connects to workers and calls RPCs to manage sessions
+// and receive a stream of Telegram updates.
+service WorkerService {
+  // Subscribe opens a server-side stream of Telegram updates from this worker.
+  rpc Subscribe(SubscribeRequest) returns (stream TelegramUpdate);
+
+  // AddAccount registers and starts a user-account session on this worker.
+  rpc AddAccount(AddAccountRequest) returns (SessionInfo);
+
+  // AddBot registers and starts a bot session on this worker.
+  rpc AddBot(AddBotRequest) returns (SessionInfo);
+
+  // RemoveSession stops and removes a session from this worker.
+  rpc RemoveSession(RemoveSessionRequest) returns (RemoveSessionResponse);
+
+  // ListSessions returns all sessions currently running on this worker.
+  rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse);
+
+  // GetMetrics returns current worker metrics (session count, memory, etc.).
+  rpc GetMetrics(GetMetricsRequest) returns (WorkerMetrics);
+
+  // Health returns the liveness status of the worker.
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
+
+// ---- Session management ----
+
+message AddAccountRequest {
+  string session_id  = 1;
+  string phone       = 2;
+}
+
+message AddBotRequest {
+  string session_id = 1;
+  string token      = 2;
+}
+
+message RemoveSessionRequest {
+  string session_id = 1;
+}
+
+message RemoveSessionResponse {
+  string session_id = 1;
+}
+
+message ListSessionsRequest {}
+
+message SessionInfo {
+  string session_id = 1;
+  string status     = 2; // pending | authorizing | ready | disconnected | error
+  string type       = 3; // account | bot
+}
+
+message ListSessionsResponse {
+  repeated SessionInfo sessions = 1;
+}
+
+// ---- Update streaming ----
+
+message SubscribeRequest {
+  // If non-empty, stream only updates for these session IDs.
+  // Empty means all sessions.
+  repeated string session_ids = 1;
+}
+
+message TelegramUpdate {
+  string session_id  = 1;
+  string type        = 2; // TDLib update type, e.g. "updateNewMessage"
+  bytes  payload     = 3; // JSON-encoded TDLib update object
+  int64  received_at = 4; // Unix timestamp (ms)
+}
+
+// ---- Metrics ----
+
+message GetMetricsRequest {}
+
+message WorkerMetrics {
+  string worker_id      = 1;
+  int32  session_count  = 2;
+  int32  ready_count    = 3;
+  int32  error_count    = 4;
+  double cpu_percent    = 5;
+  int64  memory_bytes   = 6;
+  int64  updates_total  = 7;
+  int64  collected_at   = 8; // Unix timestamp (ms)
+}
+
+// ---- Health ----
+
+message HealthRequest {}
+
+message HealthResponse {
+  bool   ok      = 1;
+  string version = 2;
+}

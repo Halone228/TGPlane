@@ -1,0 +1,31 @@
+app:
+  mode: main
+  name: tgplane
+
+database:
+  dsn: "postgres://tgplane:tgplane@localhost:5432/tgplane?sslmode=disable"
+  max_open_conns: 25
+  max_idle_conns: 10
+  conn_max_lifetime_seconds: 300
+
+redis:
+  addr: "localhost:6379"
+  password: ""
+  db: 0
+
+tdlib:
+  api_id: 0          # set your api_id from https://my.telegram.org
+  api_hash: ""       # set your api_hash
+  data_dir: "./data/sessions"
+  log_level: 1
+  use_test_dc: false
+
+grpc:
+  listen_addr: ":50051"
+
+http:
+  addr: ":8080"
+
+log:
+  level: info
+  json: false

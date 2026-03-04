@@ -1,0 +1,19 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: tgplane-main
+    static_configs:
+      - targets: ["main:8080"]
+    metrics_path: /metrics
+
+  - job_name: tgplane-worker-1
+    static_configs:
+      - targets: ["worker-1:8081"]
+    metrics_path: /metrics
+
+  - job_name: tgplane-worker-2
+    static_configs:
+      - targets: ["worker-2:8081"]
+    metrics_path: /metrics

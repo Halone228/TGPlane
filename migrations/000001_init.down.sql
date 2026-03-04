@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS bots;
+DROP TABLE IF EXISTS accounts;

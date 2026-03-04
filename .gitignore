@@ -205,3 +205,22 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Go
+/bin/
+data/
+*.test
+
+# tdlib build artifacts
+telegram-database/build/
+
+# Configs with secrets
+config.local.yaml
+config.worker.local.yaml
+
+# Go binaries
+/main
+/worker
+
+# Claude Code memory
+memory/
