@@ -1,22 +1,30 @@
 #!/usr/bin/env bash
-# Builds TDLib from the telegram-database submodule and installs it to /usr/local.
+# Builds TDLib and installs it to /usr/local.
 # Supports: Arch/CachyOS, Ubuntu/Debian, Fedora/RHEL/CentOS, macOS (Homebrew).
 # Run once before building the Go project.
+#
+# Usage:
+#   bash scripts/build-tdlib.sh              — clone latest TDLib and build
+#   TDLIB_DIR=/path/to/tdlib bash scripts/build-tdlib.sh  — build from existing dir
+#   TDLIB_TAG=v1.8.62 bash scripts/build-tdlib.sh         — clone specific tag
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
-TD_DIR="$ROOT_DIR/telegram-database"
-BUILD_DIR="$TD_DIR/build"
+
+TDLIB_REPO="https://github.com/tdlib/td.git"
+TDLIB_TAG="${TDLIB_TAG:-v1.8.62}"
+TD_DIR="${TDLIB_DIR:-${ROOT_DIR}/.tdlib-src}"
+BUILD_DIR="${TD_DIR}/build"
 
 # ---------------------------------------------------------------------------
-# Detect OS and install dependencies
+# Detect OS and install build dependencies
 # ---------------------------------------------------------------------------
 
 install_deps() {
   if command -v pacman &>/dev/null; then
     echo "==> Detected Arch / CachyOS (pacman)"
-    sudo pacman -S --needed --noconfirm cmake gcc openssl gperf
+    sudo pacman -S --needed --noconfirm cmake gcc openssl gperf git
     # CachyOS ships zlib-ng-compat instead of zlib
     if ! pacman -Q zlib-ng-compat &>/dev/null && ! pacman -Q zlib &>/dev/null; then
       sudo pacman -S --needed --noconfirm zlib
@@ -26,41 +34,50 @@ install_deps() {
     echo "==> Detected Debian / Ubuntu (apt)"
     sudo apt-get update -qq
     sudo apt-get install -y --no-install-recommends \
-      cmake g++ libssl-dev zlib1g-dev gperf
+      cmake g++ libssl-dev zlib1g-dev gperf git
 
   elif command -v dnf &>/dev/null; then
     echo "==> Detected Fedora / RHEL (dnf)"
-    sudo dnf install -y cmake gcc-c++ openssl-devel zlib-devel gperf
+    sudo dnf install -y cmake gcc-c++ openssl-devel zlib-devel gperf git
 
   elif command -v yum &>/dev/null; then
     echo "==> Detected CentOS / RHEL legacy (yum)"
-    sudo yum install -y cmake gcc-c++ openssl-devel zlib-devel gperf
+    sudo yum install -y cmake gcc-c++ openssl-devel zlib-devel gperf git
 
   elif command -v brew &>/dev/null; then
     echo "==> Detected macOS (Homebrew)"
-    brew install cmake openssl gperf
-    # openssl is keg-only; export path for cmake
+    brew install cmake openssl gperf git
     OPENSSL_ROOT="$(brew --prefix openssl)"
     export CMAKE_EXTRA_ARGS="-DOPENSSL_ROOT_DIR=${OPENSSL_ROOT}"
 
   else
-    echo "WARNING: Unknown package manager. Install manually: cmake g++ openssl-dev zlib-dev gperf"
+    echo "WARNING: Unknown package manager."
+    echo "         Install manually: cmake g++ openssl-dev zlib-dev gperf git"
   fi
+}
+
+# ---------------------------------------------------------------------------
+# Clone TDLib if needed
+# ---------------------------------------------------------------------------
+
+clone_tdlib() {
+  if [ -f "${TD_DIR}/CMakeLists.txt" ]; then
+    echo "==> TDLib source found at ${TD_DIR} — skipping clone"
+    return
+  fi
+
+  echo "==> Cloning TDLib ${TDLIB_TAG} into ${TD_DIR}"
+  git clone --depth 1 --branch "${TDLIB_TAG}" "${TDLIB_REPO}" "${TD_DIR}"
 }
 
 # ---------------------------------------------------------------------------
 # Build
 # ---------------------------------------------------------------------------
 
-echo "==> Building TDLib from ${TD_DIR}"
-
-if [ ! -f "${TD_DIR}/CMakeLists.txt" ]; then
-  echo "ERROR: telegram-database submodule is not initialised."
-  echo "       Run: git submodule update --init --recursive"
-  exit 1
-fi
-
 install_deps
+clone_tdlib
+
+echo "==> Building TDLib from ${TD_DIR}"
 
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
@@ -76,5 +93,7 @@ make -j"$(nproc 2>/dev/null || sysctl -n hw.logicalcpu)"
 echo "==> Installing TDLib to /usr/local"
 sudo make install
 
-echo "==> Done. Build the worker with:"
+echo ""
+echo "==> Done."
+echo "    Build the worker with:"
 echo "    CGO_LDFLAGS_ALLOW=\"-Wl,--whole-archive.*|-Wl,--no-whole-archive\" go build ./cmd/worker/..."

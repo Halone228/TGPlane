@@ -39,50 +39,74 @@ Updates: TDLib → worker → Redis Stream (`tgplane:updates`) → webhooks.
 
 ## Quick Start
 
-### 1. Clone with submodule
+### 1. Clone
 
 ```bash
-git clone --recurse-submodules https://github.com/tgplane/tgplane
+git clone https://github.com/tgplane/tgplane
 cd tgplane
 ```
 
-### 2. Build TDLib
+### 2. Install Go (if not installed)
 
 ```bash
-# Arch / CachyOS
-sudo pacman -S --needed cmake gcc openssl gperf
-
-bash scripts/build-tdlib.sh   # installs to /usr/local, takes ~10 min
+bash scripts/install-go.sh
 ```
 
-### 3. Start infrastructure
+### 3. Build TDLib
+
+The script clones TDLib v1.8.62, installs build dependencies, compiles, and installs to `/usr/local`. Takes ~10 minutes.
 
 ```bash
-docker compose -f deployments/docker-compose.prod.yml up -d postgres redis
+bash scripts/build-tdlib.sh
 ```
 
-### 4. Run migrations
+To use a specific version or an existing source tree:
+
+```bash
+TDLIB_TAG=v1.8.62 bash scripts/build-tdlib.sh
+TDLIB_DIR=/path/to/td bash scripts/build-tdlib.sh
+```
+
+Supported systems: **Arch / CachyOS**, **Debian / Ubuntu**, **Fedora / RHEL**, **macOS**.
+
+### 4. Run project setup
+
+```bash
+bash scripts/setup.sh
+```
+
+Creates `config.yaml` and `config.worker.yaml` from examples, downloads Go modules.
+
+### 5. Start infrastructure
+
+```bash
+docker compose -f deployments/docker-compose.yml up -d
+```
+
+### 6. Configure
+
+Edit the configs created by `setup.sh`:
+
+```yaml
+# config.yaml — main node
+database:
+  dsn: "postgres://tgplane:tgplane@localhost:5432/tgplane?sslmode=disable"
+auth:
+  master_key: "your-secret-master-key"
+
+# config.worker.yaml — worker node
+tdlib:
+  api_id: 123456       # from https://my.telegram.org
+  api_hash: "abc..."
+```
+
+### 7. Run migrations
 
 ```bash
 make migrate-up
 ```
 
-### 5. Configure
-
-Copy and edit configs:
-
-```bash
-cp config.yaml config.local.yaml
-cp config.worker.yaml config.worker.local.yaml
-```
-
-Set at minimum:
-- `database.dsn` — PostgreSQL DSN
-- `redis.addr` — Redis address
-- `tdlib.api_id` / `tdlib.api_hash` — from https://my.telegram.org
-- `auth.master_key` — bootstrap key for first API key creation
-
-### 6. Run
+### 8. Run
 
 ```bash
 # Terminal 1 — main node
