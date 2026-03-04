@@ -1,6 +1,0 @@
-[submodule "td"]
-	path = td
-	url = https://github.com/tdlib/td
-[submodule "telegram-database"]
-	path = telegram-database
-	url = https://github.com/Halone228/telegram-database
