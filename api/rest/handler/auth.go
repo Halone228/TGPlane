@@ -49,6 +49,9 @@ func (h *AuthHandler) list(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	if keys == nil {
+		keys = []*auth.APIKey{}
+	}
 	c.JSON(http.StatusOK, keys)
 }
 

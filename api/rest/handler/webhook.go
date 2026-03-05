@@ -48,6 +48,9 @@ func (h *WebhookHandler) list(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	if hooks == nil {
+		hooks = []*webhook.Webhook{}
+	}
 	c.JSON(http.StatusOK, hooks)
 }
 

@@ -58,6 +58,9 @@ func (h *AccountHandler) list(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, errorResp(err))
 		return
 	}
+	if accounts == nil {
+		accounts = []*account.Account{}
+	}
 	c.JSON(http.StatusOK, accounts)
 }
 

@@ -54,6 +54,9 @@ func (h *BotHandler) list(c *gin.Context) {
 		c.JSON(500, errorResp(err))
 		return
 	}
+	if bots == nil {
+		bots = []*bot.Bot{}
+	}
 	c.JSON(200, bots)
 }
 
