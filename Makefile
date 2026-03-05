@@ -13,13 +13,13 @@ build-main:
 	go build -o bin/tgplane-main ./cmd/main
 
 build-worker:
-	CGO_LDFLAGS_ALLOW="-Wl,--whole-archive.*|-Wl,--no-whole-archive" go build -o bin/tgplane-worker ./cmd/worker
+	CGO_LDFLAGS_ALLOW="-Wl,--whole-archive.*|-Wl,--no-whole-archive" go build -tags tde2e -o bin/tgplane-worker ./cmd/worker
 
 run-main:
 	go run ./cmd/main --config config.yaml
 
 run-worker:
-	CGO_LDFLAGS_ALLOW="-Wl,--whole-archive.*|-Wl,--no-whole-archive" go run ./cmd/worker --config config.worker.yaml
+	CGO_LDFLAGS_ALLOW="-Wl,--whole-archive.*|-Wl,--no-whole-archive" go run -tags tde2e ./cmd/worker --config config.worker.yaml
 
 infra-up:
 	docker compose -f deployments/docker-compose.yml up -d
