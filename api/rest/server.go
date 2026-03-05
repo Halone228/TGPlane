@@ -3,6 +3,7 @@ package rest
 import (
 	"context"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -53,9 +54,16 @@ func NewServer(d Deps) *Server {
 	handler.Health(r)
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
-	// Serve Web UI from web/dist if present.
-	r.Static("/ui", "./web/dist")
-	r.GET("/", func(c *gin.Context) { c.Redirect(302, "/ui") })
+	// Serve Web UI (SPA) — real files served directly, unknown paths fallback to index.html.
+	r.GET("/ui/*path", func(c *gin.Context) {
+		path := "./web/dist" + c.Param("path")
+		if fi, err := os.Stat(path); err == nil && !fi.IsDir() {
+			c.File(path)
+		} else {
+			c.File("./web/dist/index.html")
+		}
+	})
+	r.GET("/", func(c *gin.Context) { c.Redirect(302, "/ui/") })
 
 	v1 := r.Group("/api/v1")
 
