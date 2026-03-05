@@ -4,16 +4,17 @@
 # Run once before building the Go project.
 #
 # Usage:
-#   bash scripts/build-tdlib.sh              — clone latest TDLib and build
+#   bash scripts/build-tdlib.sh              — clone TDLib (go-tdlib v0.7.6 commit) and build
 #   TDLIB_DIR=/path/to/tdlib bash scripts/build-tdlib.sh  — build from existing dir
-#   TDLIB_TAG=v1.8.62 bash scripts/build-tdlib.sh         — clone specific tag
+#   TDLIB_COMMIT=<hash> bash scripts/build-tdlib.sh       — use specific commit
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
 TDLIB_REPO="https://github.com/tdlib/td.git"
-TDLIB_TAG="${TDLIB_TAG:-v1.8.62}"
+# Commit required by go-tdlib v0.7.6 (version 1.8.62, 2024-11-27)
+TDLIB_COMMIT="${TDLIB_COMMIT:-22d49d5b87a4d5fc60a194dab02dd1d71529687f}"
 TD_DIR="${TDLIB_DIR:-${ROOT_DIR}/.tdlib-src}"
 BUILD_DIR="${TD_DIR}/build"
 
@@ -66,8 +67,9 @@ clone_tdlib() {
     return
   fi
 
-  echo "==> Cloning TDLib ${TDLIB_TAG} into ${TD_DIR}"
-  git clone --depth 1 --branch "${TDLIB_TAG}" "${TDLIB_REPO}" "${TD_DIR}"
+  echo "==> Cloning TDLib (commit ${TDLIB_COMMIT}) into ${TD_DIR}"
+  git clone "${TDLIB_REPO}" "${TD_DIR}"
+  git -C "${TD_DIR}" checkout "${TDLIB_COMMIT}"
 }
 
 # ---------------------------------------------------------------------------

@@ -213,6 +213,7 @@ data/
 
 # tdlib build artifacts
 telegram-database/build/
+tdlib-prebuilt/
 
 # Configs with secrets
 config.local.yaml

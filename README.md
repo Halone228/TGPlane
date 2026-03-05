@@ -54,16 +54,16 @@ bash scripts/install-go.sh
 
 ### 3. Build TDLib
 
-The script clones TDLib v1.8.62, installs build dependencies, compiles, and installs to `/usr/local`. Takes ~10 minutes.
+The script clones TDLib at the commit required by go-tdlib v0.7.6 (version 1.8.62), installs build dependencies, compiles, and installs to `/usr/local`. Takes ~10 minutes.
 
 ```bash
 bash scripts/build-tdlib.sh
 ```
 
-To use a specific version or an existing source tree:
+To use a specific commit or an existing source tree:
 
 ```bash
-TDLIB_TAG=v1.8.62 bash scripts/build-tdlib.sh
+TDLIB_COMMIT=22d49d5b87a4d5fc60a194dab02dd1d71529687f bash scripts/build-tdlib.sh
 TDLIB_DIR=/path/to/td bash scripts/build-tdlib.sh
 ```
 

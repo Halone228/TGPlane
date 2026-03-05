@@ -5,24 +5,30 @@ WORKDIR /src
 
 # System deps for TDLib build
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    cmake make g++ zlib1g-dev libssl-dev gperf \
+    cmake make g++ zlib1g-dev libssl-dev gperf git \
     && rm -rf /var/lib/apt/lists/*
+
+# Build TDLib from the commit required by go-tdlib v0.7.6
+# https://github.com/zelenin/go-tdlib/blob/v0.7.6/README.md
+ARG TDLIB_COMMIT=22d49d5b87a4d5fc60a194dab02dd1d71529687f
+RUN git clone https://github.com/tdlib/td.git /tdlib-src \
+    && cd /tdlib-src \
+    && git checkout ${TDLIB_COMMIT} \
+    && mkdir build && cd build \
+    && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local .. \
+    && make -j$(nproc) \
+    && make install \
+    && rm -rf /tdlib-src
 
 # Dependencies
 COPY go.mod go.sum ./
 RUN go mod download
 
-# TDLib submodule
-COPY telegram-database/ telegram-database/
-COPY scripts/build-tdlib.sh scripts/
-RUN bash scripts/build-tdlib.sh
-
 # Source
 COPY . .
 
 RUN CGO_ENABLED=1 GOOS=linux \
-    CGO_CFLAGS="-I/src/telegram-database/build/include" \
-    CGO_LDFLAGS="-L/src/telegram-database/build/lib -ltdjson_static -lc++ -lz -lssl -lcrypto" \
+    CGO_LDFLAGS_ALLOW="-Wl,--whole-archive.*|-Wl,--no-whole-archive" \
     go build -ldflags="-s -w" -o /bin/tgplane-worker ./cmd/worker
 
 # ---- Runtime stage ----
@@ -33,10 +39,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /bin/tgplane-worker /tgplane-worker
-COPY --from=builder /src/telegram-database/build/lib/libtdjson.so* /usr/local/lib/
+COPY --from=builder /usr/local/lib/libtdjson.so* /usr/local/lib/
 RUN ldconfig
 
-EXPOSE 8081 50052
+EXPOSE 8081
 
 ENTRYPOINT ["/tgplane-worker"]
 CMD ["--config", "/etc/tgplane/config.worker.yaml"]

@@ -80,7 +80,7 @@ services:
       redis:
         condition: service_healthy
     ports:
-      - "8080:8080"
+      - "8090:8080"
       - "50051:50051"
     environment:
       DATABASE_DSN: "postgres://tgplane:${POSTGRES_PASSWORD:-tgplane}@postgres:5432/tgplane?sslmode=disable"
