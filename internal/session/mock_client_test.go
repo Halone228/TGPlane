@@ -37,6 +37,10 @@ func (m *mockClient) RunEventLoop(ctx context.Context, handler func(interface{})
 	<-ctx.Done()
 }
 
+func (m *mockClient) SendCode(_ string) error    { return nil }
+func (m *mockClient) SendPassword(_ string) error { return nil }
+func (m *mockClient) AuthState() string            { return "ready" }
+
 func (m *mockClient) isClosed() bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()

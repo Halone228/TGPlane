@@ -77,6 +77,11 @@ export interface BulkResult {
 
 // ── Accounts ───────────────────────────────────────────────────────────────
 
+export interface AuthState {
+  session_id: string
+  state: string
+}
+
 export const accountsApi = {
   list: (params?: { limit?: number; offset?: number }) =>
     api.get<Account[]>('/accounts', { params }).then((r) => r.data),
@@ -84,6 +89,12 @@ export const accountsApi = {
   create: (phone: string) =>
     api.post<Account>('/accounts', { phone }).then((r) => r.data),
   remove: (id: number) => api.delete(`/accounts/${id}`),
+  getAuthState: (id: number) =>
+    api.get<AuthState>(`/accounts/${id}/auth-state`).then((r) => r.data),
+  sendAuthCode: (id: number, code: string) =>
+    api.post(`/accounts/${id}/auth-code`, { code }).then((r) => r.data),
+  sendPassword: (id: number, password: string) =>
+    api.post(`/accounts/${id}/password`, { password }).then((r) => r.data),
 }
 
 // ── Bots ───────────────────────────────────────────────────────────────────

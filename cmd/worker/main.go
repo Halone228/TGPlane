@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"os"
@@ -54,8 +55,12 @@ func main() {
 		metrics.NewSessionHook(),
 	)
 
+	// Server lifetime context — cancelled on shutdown so all sessions stop cleanly.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// --- gRPC worker server ---
-	workerSrv := workerserver.New(id, pool, l)
+	workerSrv := workerserver.NewWithContext(id, pool, l, ctx)
 	grpcSrv := workerserver.NewGRPCServer(workerSrv, l)
 
 	go func() {
@@ -75,6 +80,7 @@ func main() {
 	<-quit
 
 	l.Info("shutting down…")
+	cancel()
 	grpcSrv.Stop()
 	l.Info("stopped")
 }

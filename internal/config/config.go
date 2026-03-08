@@ -1,6 +1,8 @@
 package config
 
 import (
+	"strings"
+
 	"github.com/spf13/viper"
 )
 
@@ -13,12 +15,15 @@ type Config struct {
 	HTTP     HTTPConfig
 	Log      LogConfig
 	Auth      AuthConfig
-	RateLimit RateLimitConfig
+	RateLimit RateLimitConfig `mapstructure:"rate_limit"`
 }
 
 type AuthConfig struct {
 	// MasterKey bypasses DB lookup. Leave empty to disable.
 	MasterKey string `mapstructure:"master_key"`
+	// TokenEncryptKey is a 64-char hex string (32 bytes) for AES-256-GCM
+	// encryption of bot tokens at rest. Leave empty to disable encryption.
+	TokenEncryptKey string `mapstructure:"token_encrypt_key"`
 }
 
 type RateLimitConfig struct {
@@ -74,6 +79,7 @@ func Load(path string) (*Config, error) {
 	v := viper.New()
 	v.SetConfigFile(path)
 	v.SetConfigType("yaml")
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
 
 	setDefaults(v)

@@ -44,6 +44,18 @@ func (s *Service) List(ctx context.Context, f ListFilter) ([]*Account, error) {
 	return s.repo.List(ctx, f)
 }
 
+func (s *Service) UpdateStatus(ctx context.Context, id int64, status Status) error {
+	return s.repo.UpdateStatus(ctx, id, status)
+}
+
+func (s *Service) UpdateWorkerID(ctx context.Context, sessionID, workerID string) error {
+	return s.repo.UpdateWorkerID(ctx, sessionID, workerID)
+}
+
+func (s *Service) ListByWorkerID(ctx context.Context, workerID string) ([]*Account, error) {
+	return s.repo.ListByWorkerID(ctx, workerID)
+}
+
 func (s *Service) Remove(ctx context.Context, id int64) error {
 	if err := s.repo.Delete(ctx, id); err != nil {
 		return fmt.Errorf("remove account: %w", err)

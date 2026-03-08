@@ -18,6 +18,7 @@ import (
 	"github.com/tgplane/tgplane/internal/bot"
 	"github.com/tgplane/tgplane/internal/bulk"
 	"github.com/tgplane/tgplane/internal/config"
+	"github.com/tgplane/tgplane/internal/crypto"
 	"github.com/tgplane/tgplane/internal/database"
 	"github.com/tgplane/tgplane/internal/logger"
 	"github.com/tgplane/tgplane/internal/metrics"
@@ -26,6 +27,7 @@ import (
 	"github.com/tgplane/tgplane/internal/session"
 	"github.com/tgplane/tgplane/internal/stream"
 	"github.com/tgplane/tgplane/internal/webhook"
+	"github.com/tgplane/tgplane/internal/worker"
 	"github.com/tgplane/tgplane/internal/worker/manager"
 	"go.uber.org/zap"
 )
@@ -65,8 +67,16 @@ func main() {
 	authRepo := auth.NewPostgresRepository(db)
 	webhookRepo := webhook.NewPostgresRepository(db)
 
+	tokenEnc, err := crypto.NewTokenEncryptor(cfg.Auth.TokenEncryptKey)
+	if err != nil {
+		l.Fatal("init token encryptor", zap.Error(err))
+	}
+	if tokenEnc.IsEnabled() {
+		l.Info("bot token encryption enabled")
+	}
+
 	accountSvc := account.NewService(accountRepo, l)
-	botSvc := bot.NewService(botRepo, l)
+	botSvc := bot.NewService(botRepo, l, tokenEnc)
 	authSvc := auth.NewService(authRepo, cfg.Auth.MasterKey)
 	webhookSvc := webhook.NewService(webhookRepo)
 
@@ -90,6 +100,7 @@ func main() {
 	metrics.BuildInfo.WithLabelValues("0.1.0", "main").Set(1)
 
 	// --- Worker manager ---
+	workerRepo := worker.NewRepository(db)
 	workerMgr := manager.New(func(workerID string, upd *tgplanev1.TelegramUpdate) {
 		l.Debug("update routed",
 			zap.String("worker", workerID),
@@ -99,7 +110,46 @@ func main() {
 		if err := publisher.Publish(context.Background(), workerID, upd); err != nil {
 			l.Error("publish update to stream", zap.Error(err))
 		}
-	}, l)
+	}, l, workerRepo)
+	workerMgr.RestoreWorkers(context.Background())
+
+	workerMgr.SetOnWorkerReady(func(ctx context.Context, workerID string) {
+		// Restore bot sessions assigned to this worker
+		bots, err := botSvc.ListByWorkerID(ctx, workerID)
+		if err != nil {
+			l.Error("list bots for worker", zap.String("worker", workerID), zap.Error(err))
+			return
+		}
+		for _, b := range bots {
+			if _, err := workerMgr.AssignBotToWorker(ctx, workerID, b.SessionID, b.Token); err != nil {
+				l.Warn("restore bot session",
+					zap.String("session_id", b.SessionID),
+					zap.String("worker", workerID),
+					zap.Error(err),
+				)
+			}
+		}
+		// Restore account sessions
+		accounts, err := accountSvc.ListByWorkerID(ctx, workerID)
+		if err != nil {
+			l.Error("list accounts for worker", zap.String("worker", workerID), zap.Error(err))
+			return
+		}
+		for _, a := range accounts {
+			if _, err := workerMgr.AssignAccountToWorker(ctx, workerID, a.SessionID, a.Phone); err != nil {
+				l.Warn("restore account session",
+					zap.String("session_id", a.SessionID),
+					zap.String("worker", workerID),
+					zap.Error(err),
+				)
+			}
+		}
+		l.Info("sessions restored on worker",
+			zap.String("worker", workerID),
+			zap.Int("bots", len(bots)),
+			zap.Int("accounts", len(accounts)),
+		)
+	})
 
 	// --- Bulk service ---
 	bulkSvc := bulk.NewService(accountSvc, botSvc, workerMgr)
@@ -126,6 +176,8 @@ func main() {
 		AppCtx:     ctx,
 		Log:        l,
 		Addr:       cfg.HTTP.Addr,
+		DB:         db,
+		RDB:        rdb,
 	})
 
 	go func() {

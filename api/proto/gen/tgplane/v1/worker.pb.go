@@ -353,6 +353,206 @@ func (x *ListSessionsResponse) GetSessions() []*SessionInfo {
 	return nil
 }
 
+type SendAuthCodeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendAuthCodeRequest) Reset() {
+	*x = SendAuthCodeRequest{}
+	mi := &file_worker_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendAuthCodeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendAuthCodeRequest) ProtoMessage() {}
+
+func (x *SendAuthCodeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendAuthCodeRequest.ProtoReflect.Descriptor instead.
+func (*SendAuthCodeRequest) Descriptor() ([]byte, []int) {
+	return file_worker_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *SendAuthCodeRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *SendAuthCodeRequest) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+type SendPasswordRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendPasswordRequest) Reset() {
+	*x = SendPasswordRequest{}
+	mi := &file_worker_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendPasswordRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendPasswordRequest) ProtoMessage() {}
+
+func (x *SendPasswordRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendPasswordRequest.ProtoReflect.Descriptor instead.
+func (*SendPasswordRequest) Descriptor() ([]byte, []int) {
+	return file_worker_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *SendPasswordRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *SendPasswordRequest) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+type GetAuthStateRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetAuthStateRequest) Reset() {
+	*x = GetAuthStateRequest{}
+	mi := &file_worker_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetAuthStateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAuthStateRequest) ProtoMessage() {}
+
+func (x *GetAuthStateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAuthStateRequest.ProtoReflect.Descriptor instead.
+func (*GetAuthStateRequest) Descriptor() ([]byte, []int) {
+	return file_worker_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *GetAuthStateRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+type AuthState struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	State         string                 `protobuf:"bytes,2,opt,name=state,proto3" json:"state,omitempty"` // "waiting_phone" | "waiting_code" | "waiting_password" | "ready" | "error"
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AuthState) Reset() {
+	*x = AuthState{}
+	mi := &file_worker_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AuthState) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AuthState) ProtoMessage() {}
+
+func (x *AuthState) ProtoReflect() protoreflect.Message {
+	mi := &file_worker_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AuthState.ProtoReflect.Descriptor instead.
+func (*AuthState) Descriptor() ([]byte, []int) {
+	return file_worker_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *AuthState) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *AuthState) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
 type SubscribeRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// If non-empty, stream only updates for these session IDs.
@@ -364,7 +564,7 @@ type SubscribeRequest struct {
 
 func (x *SubscribeRequest) Reset() {
 	*x = SubscribeRequest{}
-	mi := &file_worker_proto_msgTypes[7]
+	mi := &file_worker_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -376,7 +576,7 @@ func (x *SubscribeRequest) String() string {
 func (*SubscribeRequest) ProtoMessage() {}
 
 func (x *SubscribeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_worker_proto_msgTypes[7]
+	mi := &file_worker_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -389,7 +589,7 @@ func (x *SubscribeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubscribeRequest.ProtoReflect.Descriptor instead.
 func (*SubscribeRequest) Descriptor() ([]byte, []int) {
-	return file_worker_proto_rawDescGZIP(), []int{7}
+	return file_worker_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *SubscribeRequest) GetSessionIds() []string {
@@ -411,7 +611,7 @@ type TelegramUpdate struct {
 
 func (x *TelegramUpdate) Reset() {
 	*x = TelegramUpdate{}
-	mi := &file_worker_proto_msgTypes[8]
+	mi := &file_worker_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -423,7 +623,7 @@ func (x *TelegramUpdate) String() string {
 func (*TelegramUpdate) ProtoMessage() {}
 
 func (x *TelegramUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_worker_proto_msgTypes[8]
+	mi := &file_worker_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -436,7 +636,7 @@ func (x *TelegramUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TelegramUpdate.ProtoReflect.Descriptor instead.
 func (*TelegramUpdate) Descriptor() ([]byte, []int) {
-	return file_worker_proto_rawDescGZIP(), []int{8}
+	return file_worker_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *TelegramUpdate) GetSessionId() string {
@@ -475,7 +675,7 @@ type GetMetricsRequest struct {
 
 func (x *GetMetricsRequest) Reset() {
 	*x = GetMetricsRequest{}
-	mi := &file_worker_proto_msgTypes[9]
+	mi := &file_worker_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -487,7 +687,7 @@ func (x *GetMetricsRequest) String() string {
 func (*GetMetricsRequest) ProtoMessage() {}
 
 func (x *GetMetricsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_worker_proto_msgTypes[9]
+	mi := &file_worker_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -500,7 +700,7 @@ func (x *GetMetricsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMetricsRequest.ProtoReflect.Descriptor instead.
 func (*GetMetricsRequest) Descriptor() ([]byte, []int) {
-	return file_worker_proto_rawDescGZIP(), []int{9}
+	return file_worker_proto_rawDescGZIP(), []int{13}
 }
 
 type WorkerMetrics struct {
@@ -519,7 +719,7 @@ type WorkerMetrics struct {
 
 func (x *WorkerMetrics) Reset() {
 	*x = WorkerMetrics{}
-	mi := &file_worker_proto_msgTypes[10]
+	mi := &file_worker_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -531,7 +731,7 @@ func (x *WorkerMetrics) String() string {
 func (*WorkerMetrics) ProtoMessage() {}
 
 func (x *WorkerMetrics) ProtoReflect() protoreflect.Message {
-	mi := &file_worker_proto_msgTypes[10]
+	mi := &file_worker_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -544,7 +744,7 @@ func (x *WorkerMetrics) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkerMetrics.ProtoReflect.Descriptor instead.
 func (*WorkerMetrics) Descriptor() ([]byte, []int) {
-	return file_worker_proto_rawDescGZIP(), []int{10}
+	return file_worker_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *WorkerMetrics) GetWorkerId() string {
@@ -611,7 +811,7 @@ type HealthRequest struct {
 
 func (x *HealthRequest) Reset() {
 	*x = HealthRequest{}
-	mi := &file_worker_proto_msgTypes[11]
+	mi := &file_worker_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -623,7 +823,7 @@ func (x *HealthRequest) String() string {
 func (*HealthRequest) ProtoMessage() {}
 
 func (x *HealthRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_worker_proto_msgTypes[11]
+	mi := &file_worker_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -636,7 +836,7 @@ func (x *HealthRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthRequest.ProtoReflect.Descriptor instead.
 func (*HealthRequest) Descriptor() ([]byte, []int) {
-	return file_worker_proto_rawDescGZIP(), []int{11}
+	return file_worker_proto_rawDescGZIP(), []int{15}
 }
 
 type HealthResponse struct {
@@ -649,7 +849,7 @@ type HealthResponse struct {
 
 func (x *HealthResponse) Reset() {
 	*x = HealthResponse{}
-	mi := &file_worker_proto_msgTypes[12]
+	mi := &file_worker_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -661,7 +861,7 @@ func (x *HealthResponse) String() string {
 func (*HealthResponse) ProtoMessage() {}
 
 func (x *HealthResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_worker_proto_msgTypes[12]
+	mi := &file_worker_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -674,7 +874,7 @@ func (x *HealthResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthResponse.ProtoReflect.Descriptor instead.
 func (*HealthResponse) Descriptor() ([]byte, []int) {
-	return file_worker_proto_rawDescGZIP(), []int{12}
+	return file_worker_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *HealthResponse) GetOk() bool {
@@ -718,7 +918,22 @@ const file_worker_proto_rawDesc = "" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12\x12\n" +
 	"\x04type\x18\x03 \x01(\tR\x04type\"K\n" +
 	"\x14ListSessionsResponse\x123\n" +
-	"\bsessions\x18\x01 \x03(\v2\x17.tgplane.v1.SessionInfoR\bsessions\"3\n" +
+	"\bsessions\x18\x01 \x03(\v2\x17.tgplane.v1.SessionInfoR\bsessions\"H\n" +
+	"\x13SendAuthCodeRequest\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\tR\x04code\"P\n" +
+	"\x13SendPasswordRequest\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1a\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\"4\n" +
+	"\x13GetAuthStateRequest\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\"@\n" +
+	"\tAuthState\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x14\n" +
+	"\x05state\x18\x02 \x01(\tR\x05state\"3\n" +
 	"\x10SubscribeRequest\x12\x1f\n" +
 	"\vsession_ids\x18\x01 \x03(\tR\n" +
 	"sessionIds\"~\n" +
@@ -745,7 +960,7 @@ const file_worker_proto_rawDesc = "" +
 	"\rHealthRequest\":\n" +
 	"\x0eHealthResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x12\x18\n" +
-	"\aversion\x18\x02 \x01(\tR\aversion2\x8e\x04\n" +
+	"\aversion\x18\x02 \x01(\tR\aversion2\xea\x05\n" +
 	"\rWorkerService\x12G\n" +
 	"\tSubscribe\x12\x1c.tgplane.v1.SubscribeRequest\x1a\x1a.tgplane.v1.TelegramUpdate0\x01\x12D\n" +
 	"\n" +
@@ -755,7 +970,10 @@ const file_worker_proto_rawDesc = "" +
 	"\fListSessions\x12\x1f.tgplane.v1.ListSessionsRequest\x1a .tgplane.v1.ListSessionsResponse\x12F\n" +
 	"\n" +
 	"GetMetrics\x12\x1d.tgplane.v1.GetMetricsRequest\x1a\x19.tgplane.v1.WorkerMetrics\x12?\n" +
-	"\x06Health\x12\x19.tgplane.v1.HealthRequest\x1a\x1a.tgplane.v1.HealthResponseB?Z=github.com/tgplane/tgplane/api/proto/gen/tgplane/v1;tgplanev1b\x06proto3"
+	"\x06Health\x12\x19.tgplane.v1.HealthRequest\x1a\x1a.tgplane.v1.HealthResponse\x12H\n" +
+	"\fSendAuthCode\x12\x1f.tgplane.v1.SendAuthCodeRequest\x1a\x17.tgplane.v1.SessionInfo\x12H\n" +
+	"\fSendPassword\x12\x1f.tgplane.v1.SendPasswordRequest\x1a\x17.tgplane.v1.SessionInfo\x12F\n" +
+	"\fGetAuthState\x12\x1f.tgplane.v1.GetAuthStateRequest\x1a\x15.tgplane.v1.AuthStateB?Z=github.com/tgplane/tgplane/api/proto/gen/tgplane/v1;tgplanev1b\x06proto3"
 
 var (
 	file_worker_proto_rawDescOnce sync.Once
@@ -769,7 +987,7 @@ func file_worker_proto_rawDescGZIP() []byte {
 	return file_worker_proto_rawDescData
 }
 
-var file_worker_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_worker_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_worker_proto_goTypes = []any{
 	(*AddAccountRequest)(nil),     // 0: tgplane.v1.AddAccountRequest
 	(*AddBotRequest)(nil),         // 1: tgplane.v1.AddBotRequest
@@ -778,31 +996,41 @@ var file_worker_proto_goTypes = []any{
 	(*ListSessionsRequest)(nil),   // 4: tgplane.v1.ListSessionsRequest
 	(*SessionInfo)(nil),           // 5: tgplane.v1.SessionInfo
 	(*ListSessionsResponse)(nil),  // 6: tgplane.v1.ListSessionsResponse
-	(*SubscribeRequest)(nil),      // 7: tgplane.v1.SubscribeRequest
-	(*TelegramUpdate)(nil),        // 8: tgplane.v1.TelegramUpdate
-	(*GetMetricsRequest)(nil),     // 9: tgplane.v1.GetMetricsRequest
-	(*WorkerMetrics)(nil),         // 10: tgplane.v1.WorkerMetrics
-	(*HealthRequest)(nil),         // 11: tgplane.v1.HealthRequest
-	(*HealthResponse)(nil),        // 12: tgplane.v1.HealthResponse
+	(*SendAuthCodeRequest)(nil),   // 7: tgplane.v1.SendAuthCodeRequest
+	(*SendPasswordRequest)(nil),   // 8: tgplane.v1.SendPasswordRequest
+	(*GetAuthStateRequest)(nil),   // 9: tgplane.v1.GetAuthStateRequest
+	(*AuthState)(nil),             // 10: tgplane.v1.AuthState
+	(*SubscribeRequest)(nil),      // 11: tgplane.v1.SubscribeRequest
+	(*TelegramUpdate)(nil),        // 12: tgplane.v1.TelegramUpdate
+	(*GetMetricsRequest)(nil),     // 13: tgplane.v1.GetMetricsRequest
+	(*WorkerMetrics)(nil),         // 14: tgplane.v1.WorkerMetrics
+	(*HealthRequest)(nil),         // 15: tgplane.v1.HealthRequest
+	(*HealthResponse)(nil),        // 16: tgplane.v1.HealthResponse
 }
 var file_worker_proto_depIdxs = []int32{
 	5,  // 0: tgplane.v1.ListSessionsResponse.sessions:type_name -> tgplane.v1.SessionInfo
-	7,  // 1: tgplane.v1.WorkerService.Subscribe:input_type -> tgplane.v1.SubscribeRequest
+	11, // 1: tgplane.v1.WorkerService.Subscribe:input_type -> tgplane.v1.SubscribeRequest
 	0,  // 2: tgplane.v1.WorkerService.AddAccount:input_type -> tgplane.v1.AddAccountRequest
 	1,  // 3: tgplane.v1.WorkerService.AddBot:input_type -> tgplane.v1.AddBotRequest
 	2,  // 4: tgplane.v1.WorkerService.RemoveSession:input_type -> tgplane.v1.RemoveSessionRequest
 	4,  // 5: tgplane.v1.WorkerService.ListSessions:input_type -> tgplane.v1.ListSessionsRequest
-	9,  // 6: tgplane.v1.WorkerService.GetMetrics:input_type -> tgplane.v1.GetMetricsRequest
-	11, // 7: tgplane.v1.WorkerService.Health:input_type -> tgplane.v1.HealthRequest
-	8,  // 8: tgplane.v1.WorkerService.Subscribe:output_type -> tgplane.v1.TelegramUpdate
-	5,  // 9: tgplane.v1.WorkerService.AddAccount:output_type -> tgplane.v1.SessionInfo
-	5,  // 10: tgplane.v1.WorkerService.AddBot:output_type -> tgplane.v1.SessionInfo
-	3,  // 11: tgplane.v1.WorkerService.RemoveSession:output_type -> tgplane.v1.RemoveSessionResponse
-	6,  // 12: tgplane.v1.WorkerService.ListSessions:output_type -> tgplane.v1.ListSessionsResponse
-	10, // 13: tgplane.v1.WorkerService.GetMetrics:output_type -> tgplane.v1.WorkerMetrics
-	12, // 14: tgplane.v1.WorkerService.Health:output_type -> tgplane.v1.HealthResponse
-	8,  // [8:15] is the sub-list for method output_type
-	1,  // [1:8] is the sub-list for method input_type
+	13, // 6: tgplane.v1.WorkerService.GetMetrics:input_type -> tgplane.v1.GetMetricsRequest
+	15, // 7: tgplane.v1.WorkerService.Health:input_type -> tgplane.v1.HealthRequest
+	7,  // 8: tgplane.v1.WorkerService.SendAuthCode:input_type -> tgplane.v1.SendAuthCodeRequest
+	8,  // 9: tgplane.v1.WorkerService.SendPassword:input_type -> tgplane.v1.SendPasswordRequest
+	9,  // 10: tgplane.v1.WorkerService.GetAuthState:input_type -> tgplane.v1.GetAuthStateRequest
+	12, // 11: tgplane.v1.WorkerService.Subscribe:output_type -> tgplane.v1.TelegramUpdate
+	5,  // 12: tgplane.v1.WorkerService.AddAccount:output_type -> tgplane.v1.SessionInfo
+	5,  // 13: tgplane.v1.WorkerService.AddBot:output_type -> tgplane.v1.SessionInfo
+	3,  // 14: tgplane.v1.WorkerService.RemoveSession:output_type -> tgplane.v1.RemoveSessionResponse
+	6,  // 15: tgplane.v1.WorkerService.ListSessions:output_type -> tgplane.v1.ListSessionsResponse
+	14, // 16: tgplane.v1.WorkerService.GetMetrics:output_type -> tgplane.v1.WorkerMetrics
+	16, // 17: tgplane.v1.WorkerService.Health:output_type -> tgplane.v1.HealthResponse
+	5,  // 18: tgplane.v1.WorkerService.SendAuthCode:output_type -> tgplane.v1.SessionInfo
+	5,  // 19: tgplane.v1.WorkerService.SendPassword:output_type -> tgplane.v1.SessionInfo
+	10, // 20: tgplane.v1.WorkerService.GetAuthState:output_type -> tgplane.v1.AuthState
+	11, // [11:21] is the sub-list for method output_type
+	1,  // [1:11] is the sub-list for method input_type
 	1,  // [1:1] is the sub-list for extension type_name
 	1,  // [1:1] is the sub-list for extension extendee
 	0,  // [0:1] is the sub-list for field type_name
@@ -819,7 +1047,7 @@ func file_worker_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_worker_proto_rawDesc), len(file_worker_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

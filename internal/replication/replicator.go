@@ -55,12 +55,37 @@ func (r *Replicator) Run(ctx context.Context) {
 		for _, xs := range msgs {
 			for _, msg := range xs.Messages {
 				lastID = msg.ID
-				if err := r.insert(ctx, msg.Values); err != nil {
-					r.log.Error("insert message", zap.Error(err), zap.String("stream_id", msg.ID))
+				if err := r.insertWithRetry(ctx, msg.Values, msg.ID); err != nil {
+					r.log.Error("insert message failed after retries",
+						zap.Error(err), zap.String("stream_id", msg.ID))
 				}
 			}
 		}
 	}
+}
+
+func (r *Replicator) insertWithRetry(ctx context.Context, vals map[string]interface{}, streamID string) error {
+	var lastErr error
+	for attempt := range 3 {
+		if attempt > 0 {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(time.Duration(attempt) * time.Second):
+			}
+		}
+		if err := r.insert(ctx, vals); err != nil {
+			lastErr = err
+			r.log.Warn("insert message retry",
+				zap.Error(err),
+				zap.String("stream_id", streamID),
+				zap.Int("attempt", attempt+1),
+			)
+			continue
+		}
+		return nil
+	}
+	return lastErr
 }
 
 func (r *Replicator) insert(ctx context.Context, vals map[string]interface{}) error {

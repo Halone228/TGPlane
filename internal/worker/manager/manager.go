@@ -12,6 +12,19 @@ import (
 	"go.uber.org/zap"
 )
 
+// WorkerStore is an optional persistence layer for worker registrations.
+type WorkerStore interface {
+	Upsert(ctx context.Context, id, addr string) error
+	Delete(ctx context.Context, id string) error
+	List(ctx context.Context) ([]WorkerEntry, error)
+}
+
+// WorkerEntry represents a persisted worker registration.
+type WorkerEntry struct {
+	ID   string
+	Addr string
+}
+
 // UpdateHandler is called for every update routed from any worker.
 type UpdateHandler func(workerID string, update *pb.TelegramUpdate)
 
@@ -27,15 +40,18 @@ type Manager struct {
 	mu      sync.RWMutex
 	workers map[string]*wc.Client
 
-	onUpdate UpdateHandler
-	log      *zap.Logger
+	onUpdate      UpdateHandler
+	onWorkerReady func(ctx context.Context, workerID string)
+	log           *zap.Logger
+	store         WorkerStore
 }
 
-func New(onUpdate UpdateHandler, log *zap.Logger) *Manager {
+func New(onUpdate UpdateHandler, log *zap.Logger, store WorkerStore) *Manager {
 	return &Manager{
 		workers:  make(map[string]*wc.Client),
 		onUpdate: onUpdate,
 		log:      log,
+		store:    store,
 	}
 }
 
@@ -67,10 +83,20 @@ func (m *Manager) AddWorker(ctx context.Context, cfg WorkerConfig) error {
 	m.workers[cfg.ID] = c
 	m.mu.Unlock()
 
+	if m.store != nil {
+		if err := m.store.Upsert(ctx, cfg.ID, cfg.Addr); err != nil {
+			m.log.Warn("persist worker registration", zap.Error(err))
+		}
+	}
+
 	m.log.Info("worker registered", zap.String("id", cfg.ID), zap.String("addr", cfg.Addr))
 
 	// Start the subscribe loop in the background with reconnect.
 	go m.subscribeLoop(ctx, c, m.onUpdate)
+
+	if m.onWorkerReady != nil {
+		go m.onWorkerReady(ctx, cfg.ID)
+	}
 
 	return nil
 }
@@ -86,27 +112,76 @@ func (m *Manager) RemoveWorker(id string) error {
 	}
 	c.Close()
 	delete(m.workers, id)
+
+	if m.store != nil {
+		if err := m.store.Delete(context.Background(), id); err != nil {
+			m.log.Warn("remove worker from store", zap.Error(err))
+		}
+	}
+
 	m.log.Info("worker removed", zap.String("id", id))
 	return nil
 }
 
+// RestoreWorkers re-registers workers previously saved in the store.
+func (m *Manager) RestoreWorkers(ctx context.Context) int {
+	if m.store == nil {
+		return 0
+	}
+	entries, err := m.store.List(ctx)
+	if err != nil {
+		m.log.Error("load saved workers", zap.Error(err))
+		return 0
+	}
+	restored := 0
+	for _, e := range entries {
+		if err := m.AddWorker(ctx, WorkerConfig{ID: e.ID, Addr: e.Addr}); err != nil {
+			m.log.Warn("restore worker failed",
+				zap.String("id", e.ID),
+				zap.String("addr", e.Addr),
+				zap.Error(err),
+			)
+			continue
+		}
+		restored++
+	}
+	m.log.Info("workers restored from database", zap.Int("count", restored))
+	return restored
+}
+
+// DrainResult holds the outcome of a drain operation.
+type DrainResult struct {
+	Migrated int            `json:"migrated"`
+	Failed   int            `json:"failed"`
+	Errors   []SessionError `json:"errors,omitempty"`
+}
+
+// SessionError describes a per-session migration failure.
+type SessionError struct {
+	SessionID string `json:"session_id"`
+	Error     string `json:"error"`
+}
+
 // DrainWorker reassigns all sessions from the target worker to other workers,
-// then removes it. Returns the number of sessions successfully migrated.
-func (m *Manager) DrainWorker(ctx context.Context, id string) (migrated int, err error) {
+// then removes it. The returned DrainResult contains per-session error details.
+// The error return is reserved for fatal errors (worker not found, can't list sessions).
+func (m *Manager) DrainWorker(ctx context.Context, id string) (*DrainResult, error) {
 	m.mu.RLock()
 	target, ok := m.workers[id]
 	m.mu.RUnlock()
 	if !ok {
-		return 0, fmt.Errorf("worker %q not found", id)
+		return nil, fmt.Errorf("worker %q not found", id)
 	}
 
 	sessions, err := target.ListSessions(ctx)
 	if err != nil {
-		return 0, fmt.Errorf("list sessions on %s: %w", id, err)
+		return nil, fmt.Errorf("list sessions on %s: %w", id, err)
 	}
 
 	log := m.log.With(zap.String("drained_worker", id), zap.Int("sessions", len(sessions)))
 	log.Info("draining worker")
+
+	result := &DrainResult{}
 
 	for _, sess := range sessions {
 		// Pick a different worker for each session.
@@ -114,6 +189,11 @@ func (m *Manager) DrainWorker(ctx context.Context, id string) (migrated int, err
 		if pickErr != nil {
 			log.Warn("no target worker for session, skipping",
 				zap.String("session_id", sess.SessionId), zap.Error(pickErr))
+			result.Failed++
+			result.Errors = append(result.Errors, SessionError{
+				SessionID: sess.SessionId,
+				Error:     pickErr.Error(),
+			})
 			continue
 		}
 
@@ -126,6 +206,11 @@ func (m *Manager) DrainWorker(ctx context.Context, id string) (migrated int, err
 		}
 		if assignErr != nil {
 			log.Warn("reassign failed", zap.String("session_id", sess.SessionId), zap.Error(assignErr))
+			result.Failed++
+			result.Errors = append(result.Errors, SessionError{
+				SessionID: sess.SessionId,
+				Error:     assignErr.Error(),
+			})
 			continue
 		}
 
@@ -133,11 +218,11 @@ func (m *Manager) DrainWorker(ctx context.Context, id string) (migrated int, err
 		if rmErr := target.RemoveSession(ctx, sess.SessionId); rmErr != nil {
 			log.Warn("remove from source failed", zap.String("session_id", sess.SessionId), zap.Error(rmErr))
 		}
-		migrated++
+		result.Migrated++
 	}
 
-	log.Info("drain complete", zap.Int("migrated", migrated))
-	return migrated, m.RemoveWorker(id)
+	log.Info("drain complete", zap.Int("migrated", result.Migrated), zap.Int("failed", result.Failed))
+	return result, m.RemoveWorker(id)
 }
 
 // leastLoadedExcluding picks the least-loaded worker, skipping excludeID.
@@ -212,6 +297,40 @@ func (m *Manager) AssignBot(ctx context.Context, sessionID, token string) (worke
 	return c.ID(), nil
 }
 
+// SetOnWorkerReady registers a callback invoked (in a goroutine) each time a
+// worker is successfully added via AddWorker.
+func (m *Manager) SetOnWorkerReady(fn func(ctx context.Context, workerID string)) {
+	m.onWorkerReady = fn
+}
+
+// AssignBotToWorker assigns a bot session to a specific worker (by ID).
+func (m *Manager) AssignBotToWorker(ctx context.Context, workerID, sessionID, token string) (string, error) {
+	m.mu.RLock()
+	c, ok := m.workers[workerID]
+	m.mu.RUnlock()
+	if !ok {
+		return "", fmt.Errorf("worker %q not found", workerID)
+	}
+	if _, err := c.AddBot(ctx, sessionID, token); err != nil {
+		return "", fmt.Errorf("add bot on worker %s: %w", workerID, err)
+	}
+	return workerID, nil
+}
+
+// AssignAccountToWorker assigns an account session to a specific worker (by ID).
+func (m *Manager) AssignAccountToWorker(ctx context.Context, workerID, sessionID, phone string) (string, error) {
+	m.mu.RLock()
+	c, ok := m.workers[workerID]
+	m.mu.RUnlock()
+	if !ok {
+		return "", fmt.Errorf("worker %q not found", workerID)
+	}
+	if _, err := c.AddAccount(ctx, sessionID, phone); err != nil {
+		return "", fmt.Errorf("add account on worker %s: %w", workerID, err)
+	}
+	return workerID, nil
+}
+
 // RemoveSession removes a session from the specified worker.
 func (m *Manager) RemoveSession(ctx context.Context, workerID, sessionID string) error {
 	m.mu.RLock()
@@ -221,6 +340,45 @@ func (m *Manager) RemoveSession(ctx context.Context, workerID, sessionID string)
 		return fmt.Errorf("worker %q not found", workerID)
 	}
 	return c.RemoveSession(ctx, sessionID)
+}
+
+// SendAuthCode routes an auth code to the worker running the given session.
+func (m *Manager) SendAuthCode(ctx context.Context, workerID, sessionID, code string) error {
+	m.mu.RLock()
+	c, ok := m.workers[workerID]
+	m.mu.RUnlock()
+	if !ok {
+		return fmt.Errorf("worker %q not found", workerID)
+	}
+	_, err := c.SendAuthCode(ctx, sessionID, code)
+	return err
+}
+
+// SendPassword routes a 2FA password to the worker running the given session.
+func (m *Manager) SendPassword(ctx context.Context, workerID, sessionID, password string) error {
+	m.mu.RLock()
+	c, ok := m.workers[workerID]
+	m.mu.RUnlock()
+	if !ok {
+		return fmt.Errorf("worker %q not found", workerID)
+	}
+	_, err := c.SendPassword(ctx, sessionID, password)
+	return err
+}
+
+// GetAuthState gets the auth state from the worker running the given session.
+func (m *Manager) GetAuthState(ctx context.Context, workerID, sessionID string) (string, error) {
+	m.mu.RLock()
+	c, ok := m.workers[workerID]
+	m.mu.RUnlock()
+	if !ok {
+		return "", fmt.Errorf("worker %q not found", workerID)
+	}
+	state, err := c.GetAuthState(ctx, sessionID)
+	if err != nil {
+		return "", err
+	}
+	return state.State, nil
 }
 
 // Workers returns a snapshot list of currently registered worker IDs.

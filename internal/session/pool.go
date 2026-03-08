@@ -27,6 +27,9 @@ type TDClient interface {
 	ID() string
 	Close()
 	RunEventLoop(ctx context.Context, handler func(update interface{}))
+	SendCode(code string) error
+	SendPassword(password string) error
+	AuthState() string // "waiting_phone", "waiting_code", "waiting_password", "ready", "error", etc.
 }
 
 // ClientFactory creates a TDClient for a given session config.
@@ -153,6 +156,39 @@ func (p *Pool) List() []*Session {
 		result = append(result, &cp)
 	}
 	return result
+}
+
+// SendAuthCode sends auth code to the session's TDLib client.
+func (p *Pool) SendAuthCode(id, code string) error {
+	p.mu.RLock()
+	e, ok := p.sessions[id]
+	p.mu.RUnlock()
+	if !ok {
+		return fmt.Errorf("session %q not found", id)
+	}
+	return e.client.SendCode(code)
+}
+
+// SendPassword sends 2FA password to the session's TDLib client.
+func (p *Pool) SendPassword(id, password string) error {
+	p.mu.RLock()
+	e, ok := p.sessions[id]
+	p.mu.RUnlock()
+	if !ok {
+		return fmt.Errorf("session %q not found", id)
+	}
+	return e.client.SendPassword(password)
+}
+
+// GetAuthState returns the auth state for a session.
+func (p *Pool) GetAuthState(id string) (string, error) {
+	p.mu.RLock()
+	e, ok := p.sessions[id]
+	p.mu.RUnlock()
+	if !ok {
+		return "", fmt.Errorf("session %q not found", id)
+	}
+	return e.client.AuthState(), nil
 }
 
 // SetUpdateHandler replaces the update handler at runtime.

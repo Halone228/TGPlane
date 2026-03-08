@@ -14,6 +14,8 @@ import (
 	"github.com/tgplane/tgplane/internal/auth"
 	"github.com/tgplane/tgplane/internal/bot"
 	"github.com/tgplane/tgplane/internal/bulk"
+	"github.com/jmoiron/sqlx"
+	"github.com/redis/go-redis/v9"
 	"github.com/tgplane/tgplane/internal/config"
 	"github.com/tgplane/tgplane/internal/session"
 	"github.com/tgplane/tgplane/internal/webhook"
@@ -38,6 +40,8 @@ type Deps struct {
 	AppCtx     context.Context // for worker subscribe loops started via API
 	Log        *zap.Logger
 	Addr       string
+	DB         *sqlx.DB
+	RDB        *redis.Client
 }
 
 func NewServer(d Deps) *Server {
@@ -51,7 +55,7 @@ func NewServer(d Deps) *Server {
 		r.Use(middleware.KeyRateLimiter(d.RateLimit.RPS, d.RateLimit.Burst))
 	}
 
-	handler.Health(r)
+	handler.Health(r, handler.HealthDeps{DB: d.DB, RDB: d.RDB})
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	// Serve Web UI (SPA) — real files served directly, unknown paths fallback to index.html.
@@ -77,8 +81,8 @@ func NewServer(d Deps) *Server {
 		v1.Use(middleware.Auth(d.AuthSvc))
 	}
 
-	handler.NewAccountHandler(d.AccountSvc).Register(v1)
-	handler.NewBotHandler(d.BotSvc).Register(v1)
+	handler.NewAccountHandler(d.AccountSvc, d.WorkerMgr).Register(v1)
+	handler.NewBotHandler(d.BotSvc, d.WorkerMgr).Register(v1)
 	handler.NewSessionHandler(d.Pool).Register(v1)
 	if d.WorkerMgr != nil {
 		appCtx := d.AppCtx

@@ -15,7 +15,7 @@ import (
 func newBotRouter() *gin.Engine {
 	svc := bot.NewService(bot.NewMemoryRepository(), zap.NewNop())
 	r := gin.New()
-	NewBotHandler(svc).Register(r.Group("/api/v1"))
+	NewBotHandler(svc, nil).Register(r.Group("/api/v1"))
 	return r
 }
 

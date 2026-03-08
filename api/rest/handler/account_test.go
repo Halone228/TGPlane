@@ -19,7 +19,7 @@ func init() {
 func newAccountRouter() *gin.Engine {
 	svc := account.NewService(account.NewMemoryRepository(), zap.NewNop())
 	r := gin.New()
-	NewAccountHandler(svc).Register(r.Group("/api/v1"))
+	NewAccountHandler(svc, nil).Register(r.Group("/api/v1"))
 	return r
 }
 

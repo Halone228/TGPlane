@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 
@@ -8,12 +9,18 @@ import (
 	"github.com/tgplane/tgplane/internal/bot"
 )
 
-type BotHandler struct {
-	svc *bot.Service
+type workerAssigner interface {
+	AssignBot(ctx context.Context, sessionID, token string) (workerID string, err error)
+	AssignAccount(ctx context.Context, sessionID, phone string) (workerID string, err error)
 }
 
-func NewBotHandler(svc *bot.Service) *BotHandler {
-	return &BotHandler{svc: svc}
+type BotHandler struct {
+	svc    *bot.Service
+	worker workerAssigner
+}
+
+func NewBotHandler(svc *bot.Service, worker workerAssigner) *BotHandler {
+	return &BotHandler{svc: svc, worker: worker}
 }
 
 func (h *BotHandler) Register(rg *gin.RouterGroup) {
@@ -35,6 +42,17 @@ func (h *BotHandler) create(c *gin.Context) {
 	if err != nil {
 		c.JSON(500, errorResp(err))
 		return
+	}
+	if h.worker != nil {
+		workerID, err := h.worker.AssignBot(c.Request.Context(), b.SessionID, b.Token)
+		if err != nil {
+			c.JSON(500, errorResp(err))
+			return
+		}
+		b.WorkerID = &workerID
+		b.Status = bot.StatusReady
+		_ = h.svc.UpdateStatus(c.Request.Context(), b.ID, bot.StatusReady)
+		_ = h.svc.UpdateWorkerID(c.Request.Context(), b.SessionID, workerID)
 	}
 	c.JSON(201, b)
 }

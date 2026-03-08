@@ -76,10 +76,10 @@ func (h *WorkerHandler) drain(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Minute)
 	defer cancel()
 
-	migrated, err := h.mgr.DrainWorker(ctx, id)
+	result, err := h.mgr.DrainWorker(ctx, id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"migrated": migrated})
+	c.JSON(http.StatusOK, result)
 }

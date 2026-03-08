@@ -54,7 +54,7 @@ func testCtx(t *testing.T) context.Context {
 
 func newManager(t *testing.T) *manager.Manager {
 	t.Helper()
-	return manager.New(noopUpdateHandler, zap.NewNop())
+	return manager.New(noopUpdateHandler, zap.NewNop(), nil)
 }
 
 // --- Tests ---
@@ -205,9 +205,12 @@ func TestManager_CollectMetrics(t *testing.T) {
 
 type noopClient struct{ id string }
 
-func (n *noopClient) ID() string { return n.id }
-func (n *noopClient) Close()     {}
+func (n *noopClient) ID() string                                            { return n.id }
+func (n *noopClient) Close()                                                {}
 func (n *noopClient) RunEventLoop(ctx context.Context, _ func(interface{})) { <-ctx.Done() }
+func (n *noopClient) SendCode(_ string) error                               { return nil }
+func (n *noopClient) SendPassword(_ string) error                           { return nil }
+func (n *noopClient) AuthState() string                                     { return "ready" }
 
 func addSessions(ctx context.Context, pool *session.Pool, prefix string, n int) {
 	for i := range n {

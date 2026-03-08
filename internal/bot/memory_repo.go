@@ -106,6 +106,30 @@ func (r *MemoryRepository) UpdateStatus(_ context.Context, id int64, status Stat
 	return nil
 }
 
+func (r *MemoryRepository) UpdateWorkerID(_ context.Context, sessionID string, workerID string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	id, ok := r.bySession[sessionID]
+	if !ok {
+		return sql.ErrNoRows
+	}
+	r.store[id].WorkerID = &workerID
+	return nil
+}
+
+func (r *MemoryRepository) ListByWorkerID(_ context.Context, workerID string) ([]*Bot, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	result := make([]*Bot, 0)
+	for _, b := range r.store {
+		if b.WorkerID != nil && *b.WorkerID == workerID {
+			cp := *b
+			result = append(result, &cp)
+		}
+	}
+	return result, nil
+}
+
 func (r *MemoryRepository) Delete(_ context.Context, id int64) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

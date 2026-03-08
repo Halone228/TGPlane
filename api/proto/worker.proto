@@ -28,6 +28,15 @@ service WorkerService {
 
   // Health returns the liveness status of the worker.
   rpc Health(HealthRequest) returns (HealthResponse);
+
+  // SendAuthCode submits an authentication code for a session awaiting it.
+  rpc SendAuthCode(SendAuthCodeRequest) returns (SessionInfo);
+
+  // SendPassword submits a 2FA password for a session awaiting it.
+  rpc SendPassword(SendPasswordRequest) returns (SessionInfo);
+
+  // GetAuthState returns the current authorization state of a session.
+  rpc GetAuthState(GetAuthStateRequest) returns (AuthState);
 }
 
 // ---- Session management ----
@@ -60,6 +69,27 @@ message SessionInfo {
 
 message ListSessionsResponse {
   repeated SessionInfo sessions = 1;
+}
+
+// ---- Auth flow ----
+
+message SendAuthCodeRequest {
+  string session_id = 1;
+  string code = 2;
+}
+
+message SendPasswordRequest {
+  string session_id = 1;
+  string password = 2;
+}
+
+message GetAuthStateRequest {
+  string session_id = 1;
+}
+
+message AuthState {
+  string session_id = 1;
+  string state = 2; // "waiting_phone" | "waiting_code" | "waiting_password" | "ready" | "error"
 }
 
 // ---- Update streaming ----

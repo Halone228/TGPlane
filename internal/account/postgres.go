@@ -103,6 +103,23 @@ func (r *postgresRepo) UpdateStatus(ctx context.Context, id int64, status Status
 	return nil
 }
 
+func (r *postgresRepo) UpdateWorkerID(ctx context.Context, sessionID string, workerID string) error {
+	_, err := r.db.ExecContext(ctx,
+		`UPDATE accounts SET worker_id = $1, updated_at = NOW() WHERE session_id = $2`,
+		workerID, sessionID,
+	)
+	return err
+}
+
+func (r *postgresRepo) ListByWorkerID(ctx context.Context, workerID string) ([]*Account, error) {
+	var accounts []*Account
+	if err := r.db.SelectContext(ctx, &accounts,
+		`SELECT * FROM accounts WHERE worker_id = $1 ORDER BY id`, workerID); err != nil {
+		return nil, fmt.Errorf("account list by worker %s: %w", workerID, err)
+	}
+	return accounts, nil
+}
+
 func (r *postgresRepo) Delete(ctx context.Context, id int64) error {
 	_, err := r.db.ExecContext(ctx, `DELETE FROM accounts WHERE id = $1`, id)
 	if err != nil {

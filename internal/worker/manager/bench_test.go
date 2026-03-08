@@ -32,7 +32,7 @@ func startFakeWorkerB(b *testing.B, id string) string {
 
 func newManagerB(b *testing.B) *manager.Manager {
 	b.Helper()
-	return manager.New(func(_ string, _ *pb.TelegramUpdate) {}, zap.NewNop())
+	return manager.New(func(_ string, _ *pb.TelegramUpdate) {}, zap.NewNop(), nil)
 }
 
 // BenchmarkManager_LeastLoaded measures worker selection under N connected workers.

@@ -26,6 +26,9 @@ const (
 	WorkerService_ListSessions_FullMethodName  = "/tgplane.v1.WorkerService/ListSessions"
 	WorkerService_GetMetrics_FullMethodName    = "/tgplane.v1.WorkerService/GetMetrics"
 	WorkerService_Health_FullMethodName        = "/tgplane.v1.WorkerService/Health"
+	WorkerService_SendAuthCode_FullMethodName  = "/tgplane.v1.WorkerService/SendAuthCode"
+	WorkerService_SendPassword_FullMethodName  = "/tgplane.v1.WorkerService/SendPassword"
+	WorkerService_GetAuthState_FullMethodName  = "/tgplane.v1.WorkerService/GetAuthState"
 )
 
 // WorkerServiceClient is the client API for WorkerService service.
@@ -50,6 +53,12 @@ type WorkerServiceClient interface {
 	GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*WorkerMetrics, error)
 	// Health returns the liveness status of the worker.
 	Health(ctx context.Context, in *HealthRequest, opts ...grpc.CallOption) (*HealthResponse, error)
+	// SendAuthCode submits an authentication code for a session awaiting it.
+	SendAuthCode(ctx context.Context, in *SendAuthCodeRequest, opts ...grpc.CallOption) (*SessionInfo, error)
+	// SendPassword submits a 2FA password for a session awaiting it.
+	SendPassword(ctx context.Context, in *SendPasswordRequest, opts ...grpc.CallOption) (*SessionInfo, error)
+	// GetAuthState returns the current authorization state of a session.
+	GetAuthState(ctx context.Context, in *GetAuthStateRequest, opts ...grpc.CallOption) (*AuthState, error)
 }
 
 type workerServiceClient struct {
@@ -139,6 +148,36 @@ func (c *workerServiceClient) Health(ctx context.Context, in *HealthRequest, opt
 	return out, nil
 }
 
+func (c *workerServiceClient) SendAuthCode(ctx context.Context, in *SendAuthCodeRequest, opts ...grpc.CallOption) (*SessionInfo, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SessionInfo)
+	err := c.cc.Invoke(ctx, WorkerService_SendAuthCode_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workerServiceClient) SendPassword(ctx context.Context, in *SendPasswordRequest, opts ...grpc.CallOption) (*SessionInfo, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SessionInfo)
+	err := c.cc.Invoke(ctx, WorkerService_SendPassword_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *workerServiceClient) GetAuthState(ctx context.Context, in *GetAuthStateRequest, opts ...grpc.CallOption) (*AuthState, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AuthState)
+	err := c.cc.Invoke(ctx, WorkerService_GetAuthState_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkerServiceServer is the server API for WorkerService service.
 // All implementations must embed UnimplementedWorkerServiceServer
 // for forward compatibility.
@@ -161,6 +200,12 @@ type WorkerServiceServer interface {
 	GetMetrics(context.Context, *GetMetricsRequest) (*WorkerMetrics, error)
 	// Health returns the liveness status of the worker.
 	Health(context.Context, *HealthRequest) (*HealthResponse, error)
+	// SendAuthCode submits an authentication code for a session awaiting it.
+	SendAuthCode(context.Context, *SendAuthCodeRequest) (*SessionInfo, error)
+	// SendPassword submits a 2FA password for a session awaiting it.
+	SendPassword(context.Context, *SendPasswordRequest) (*SessionInfo, error)
+	// GetAuthState returns the current authorization state of a session.
+	GetAuthState(context.Context, *GetAuthStateRequest) (*AuthState, error)
 	mustEmbedUnimplementedWorkerServiceServer()
 }
 
@@ -191,6 +236,15 @@ func (UnimplementedWorkerServiceServer) GetMetrics(context.Context, *GetMetricsR
 }
 func (UnimplementedWorkerServiceServer) Health(context.Context, *HealthRequest) (*HealthResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Health not implemented")
+}
+func (UnimplementedWorkerServiceServer) SendAuthCode(context.Context, *SendAuthCodeRequest) (*SessionInfo, error) {
+	return nil, status.Error(codes.Unimplemented, "method SendAuthCode not implemented")
+}
+func (UnimplementedWorkerServiceServer) SendPassword(context.Context, *SendPasswordRequest) (*SessionInfo, error) {
+	return nil, status.Error(codes.Unimplemented, "method SendPassword not implemented")
+}
+func (UnimplementedWorkerServiceServer) GetAuthState(context.Context, *GetAuthStateRequest) (*AuthState, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAuthState not implemented")
 }
 func (UnimplementedWorkerServiceServer) mustEmbedUnimplementedWorkerServiceServer() {}
 func (UnimplementedWorkerServiceServer) testEmbeddedByValue()                       {}
@@ -332,6 +386,60 @@ func _WorkerService_Health_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkerService_SendAuthCode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendAuthCodeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkerServiceServer).SendAuthCode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkerService_SendAuthCode_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkerServiceServer).SendAuthCode(ctx, req.(*SendAuthCodeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkerService_SendPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendPasswordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkerServiceServer).SendPassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkerService_SendPassword_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkerServiceServer).SendPassword(ctx, req.(*SendPasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorkerService_GetAuthState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAuthStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkerServiceServer).GetAuthState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkerService_GetAuthState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkerServiceServer).GetAuthState(ctx, req.(*GetAuthStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkerService_ServiceDesc is the grpc.ServiceDesc for WorkerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -362,6 +470,18 @@ var WorkerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Health",
 			Handler:    _WorkerService_Health_Handler,
+		},
+		{
+			MethodName: "SendAuthCode",
+			Handler:    _WorkerService_SendAuthCode_Handler,
+		},
+		{
+			MethodName: "SendPassword",
+			Handler:    _WorkerService_SendPassword_Handler,
+		},
+		{
+			MethodName: "GetAuthState",
+			Handler:    _WorkerService_GetAuthState_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

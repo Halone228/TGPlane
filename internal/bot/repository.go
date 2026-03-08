@@ -9,6 +9,8 @@ type Repository interface {
 	List(ctx context.Context, filter ListFilter) ([]*Bot, error)
 	UpdateProfile(ctx context.Context, id int64, req UpdateProfileRequest) error
 	UpdateStatus(ctx context.Context, id int64, status Status) error
+	UpdateWorkerID(ctx context.Context, sessionID string, workerID string) error
+	ListByWorkerID(ctx context.Context, workerID string) ([]*Bot, error)
 	Delete(ctx context.Context, id int64) error
 }
 

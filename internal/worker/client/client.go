@@ -102,6 +102,29 @@ func (c *Client) GetMetrics(ctx context.Context) (*pb.WorkerMetrics, error) {
 	return c.rpc.GetMetrics(ctx, &pb.GetMetricsRequest{})
 }
 
+// SendAuthCode sends an auth code to a session on this worker.
+func (c *Client) SendAuthCode(ctx context.Context, sessionID, code string) (*pb.SessionInfo, error) {
+	return c.rpc.SendAuthCode(ctx, &pb.SendAuthCodeRequest{
+		SessionId: sessionID,
+		Code:      code,
+	})
+}
+
+// SendPassword sends a 2FA password to a session on this worker.
+func (c *Client) SendPassword(ctx context.Context, sessionID, password string) (*pb.SessionInfo, error) {
+	return c.rpc.SendPassword(ctx, &pb.SendPasswordRequest{
+		SessionId: sessionID,
+		Password:  password,
+	})
+}
+
+// GetAuthState gets the authorization state of a session on this worker.
+func (c *Client) GetAuthState(ctx context.Context, sessionID string) (*pb.AuthState, error) {
+	return c.rpc.GetAuthState(ctx, &pb.GetAuthStateRequest{
+		SessionId: sessionID,
+	})
+}
+
 // Subscribe opens a streaming subscription to updates from this worker.
 // It blocks, calling handler for each update, until ctx is cancelled or
 // the stream ends. On stream error it returns the error for the caller to retry.

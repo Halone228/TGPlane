@@ -93,6 +93,23 @@ func (r *postgresRepo) UpdateStatus(ctx context.Context, id int64, status Status
 	return err
 }
 
+func (r *postgresRepo) UpdateWorkerID(ctx context.Context, sessionID string, workerID string) error {
+	_, err := r.db.ExecContext(ctx,
+		`UPDATE bots SET worker_id = $1, updated_at = NOW() WHERE session_id = $2`,
+		workerID, sessionID,
+	)
+	return err
+}
+
+func (r *postgresRepo) ListByWorkerID(ctx context.Context, workerID string) ([]*Bot, error) {
+	var bots []*Bot
+	if err := r.db.SelectContext(ctx, &bots,
+		`SELECT * FROM bots WHERE worker_id = $1 ORDER BY id`, workerID); err != nil {
+		return nil, fmt.Errorf("bot list by worker %s: %w", workerID, err)
+	}
+	return bots, nil
+}
+
 func (r *postgresRepo) Delete(ctx context.Context, id int64) error {
 	_, err := r.db.ExecContext(ctx, `DELETE FROM bots WHERE id = $1`, id)
 	return err

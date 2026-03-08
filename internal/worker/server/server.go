@@ -25,6 +25,7 @@ type WorkerServer struct {
 	id   string
 	pool *session.Pool
 	log  *zap.Logger
+	ctx  context.Context // server lifetime context for sessions
 
 	// updateBus fans out updates to all active Subscribe streams.
 	mu          sync.RWMutex
@@ -35,10 +36,15 @@ type WorkerServer struct {
 }
 
 func New(workerID string, pool *session.Pool, log *zap.Logger) *WorkerServer {
+	return NewWithContext(workerID, pool, log, context.Background())
+}
+
+func NewWithContext(workerID string, pool *session.Pool, log *zap.Logger, ctx context.Context) *WorkerServer {
 	s := &WorkerServer{
 		id:          workerID,
 		pool:        pool,
 		log:         log,
+		ctx:         ctx,
 		subscribers: make(map[string]chan *pb.TelegramUpdate),
 	}
 	// Wire pool updates → all subscribers
@@ -125,15 +131,15 @@ func (s *WorkerServer) Subscribe(req *pb.SubscribeRequest, stream pb.WorkerServi
 	}
 }
 
-func (s *WorkerServer) AddAccount(ctx context.Context, req *pb.AddAccountRequest) (*pb.SessionInfo, error) {
-	if err := s.pool.Add(ctx, req.SessionId, req.Phone); err != nil {
+func (s *WorkerServer) AddAccount(_ context.Context, req *pb.AddAccountRequest) (*pb.SessionInfo, error) {
+	if err := s.pool.Add(s.ctx, req.SessionId, req.Phone); err != nil {
 		return nil, status.Errorf(codes.Internal, "add account: %v", err)
 	}
 	return s.sessionInfo(req.SessionId), nil
 }
 
-func (s *WorkerServer) AddBot(ctx context.Context, req *pb.AddBotRequest) (*pb.SessionInfo, error) {
-	if err := s.pool.AddBot(ctx, req.SessionId, req.Token); err != nil {
+func (s *WorkerServer) AddBot(_ context.Context, req *pb.AddBotRequest) (*pb.SessionInfo, error) {
+	if err := s.pool.AddBot(s.ctx, req.SessionId, req.Token); err != nil {
 		return nil, status.Errorf(codes.Internal, "add bot: %v", err)
 	}
 	return s.sessionInfo(req.SessionId), nil
@@ -182,6 +188,31 @@ func (s *WorkerServer) GetMetrics(_ context.Context, _ *pb.GetMetricsRequest) (*
 
 func (s *WorkerServer) Health(_ context.Context, _ *pb.HealthRequest) (*pb.HealthResponse, error) {
 	return &pb.HealthResponse{Ok: true, Version: "0.1.0"}, nil
+}
+
+func (s *WorkerServer) SendAuthCode(_ context.Context, req *pb.SendAuthCodeRequest) (*pb.SessionInfo, error) {
+	if err := s.pool.SendAuthCode(req.SessionId, req.Code); err != nil {
+		return nil, status.Errorf(codes.Internal, "send auth code: %v", err)
+	}
+	return s.sessionInfo(req.SessionId), nil
+}
+
+func (s *WorkerServer) SendPassword(_ context.Context, req *pb.SendPasswordRequest) (*pb.SessionInfo, error) {
+	if err := s.pool.SendPassword(req.SessionId, req.Password); err != nil {
+		return nil, status.Errorf(codes.Internal, "send password: %v", err)
+	}
+	return s.sessionInfo(req.SessionId), nil
+}
+
+func (s *WorkerServer) GetAuthState(_ context.Context, req *pb.GetAuthStateRequest) (*pb.AuthState, error) {
+	state, err := s.pool.GetAuthState(req.SessionId)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "get auth state: %v", err)
+	}
+	return &pb.AuthState{
+		SessionId: req.SessionId,
+		State:     state,
+	}, nil
 }
 
 func (s *WorkerServer) sessionInfo(id string) *pb.SessionInfo {
